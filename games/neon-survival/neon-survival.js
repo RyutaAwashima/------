@@ -296,7 +296,7 @@
         earned.push(reward);
       }
     });
-    if (clearCount >= 10) {
+    if (clearCount >= 50) {
       GACHA_ITEMS.filter(function (it) { return it.special && !it.adminOnly; }).forEach(function (item) {
         if (ownedEquipment.indexOf(item.id) === -1) ownedEquipment.push(item.id);
       });
@@ -315,7 +315,7 @@
     clearRewardList.innerHTML = CLEAR_REWARDS.map(function (reward) {
       var claimed = clearedRewards.indexOf(reward.count) !== -1;
       var className = claimed ? 'claimed' : (clearCount >= reward.count ? 'ready' : 'locked');
-      var goldEquipmentBonus = reward.count === 10 ? '<br><small>👑 ゴールド装備</small>' : '';
+      var goldEquipmentBonus = reward.count === 50 ? '<br><small>👑 ゴールド装備</small>' : '';
       var status = claimed ? '獲得済み' : (clearCount >= reward.count ? '獲得可能' : clearCount + '/' + reward.count);
       return '<div class="clear-reward-item ' + className + '">' +
         '<span>撃破 ' + reward.count + '回</span>' +
@@ -328,7 +328,7 @@
   function saveOwnedEquip() { localStorage.setItem('survivalEquipOwned', JSON.stringify(ownedEquipment)); }
   function saveEquippedEquip() { localStorage.setItem('survivalEquipEquipped', JSON.stringify(equippedEquipment)); }
   function unlockGoldEquipment() {
-    if (clearCount < 10) return;
+    if (clearCount < 50) return;
     var changed = false;
     GACHA_ITEMS.filter(function (it) { return it.special && !it.adminOnly; }).forEach(function (item) {
       if (ownedEquipment.indexOf(item.id) === -1) {
@@ -886,9 +886,10 @@
     // モード別初期化
     if (gameMode === 'npc') {
       var npcHp = 20 + (npcLevel - 1) * 8;
+      if (npcLevel === 10) npcHp += 24;
       npc = {
         x: W - 120, y: H / 2, hp: npcHp, maxHp: npcHp, fireCooldown: 0, hitUntil: 0,
-        speed: 115 + (npcLevel - 1) * 12,
+        speed: 115 + (npcLevel - 1) * 12 + (npcLevel === 10 ? 18 : 0),
         damage: 1 + Math.floor((npcLevel - 1) / 3)
       };
       timerInfoEl.classList.add('hidden');
@@ -928,7 +929,9 @@
         '💰 所持ゴールド: <strong>' + gold + 'G</strong>';
     } else if (cleared) {
       // 通常モード: タイムアップでクリア
-      var bonus = Math.floor(survivalTime) * 3;
+      var survivalBonus = Math.floor(survivalTime) * 3;
+      var clearBonus = 1000;
+      var bonus = survivalBonus + clearBonus;
       revealNextCode();
       gold += bonus;
       saveGold();
@@ -936,7 +939,8 @@
       overlayTtl.textContent = '🎉 クリア！';
       overlayMsg.innerHTML =
         '100秒間生き残った！<br>' +
-        'ボーナス: <strong>' + bonus + 'G</strong><br>' +
+        'クリア報酬: <strong>' + clearBonus + 'G</strong><br>' +
+        '生存ボーナス: <strong>' + survivalBonus + 'G</strong><br>' +
         'スコア: <strong>' + scoreVal + '</strong><br>' +
         'ウェーブ: ' + waveNum + '<br>' +
         '🎁 ボーナスコード: <strong>' + (getRevealedCodeList().join('</strong>、<strong>') || 'クリアを重ねると公開されます') + '</strong><br>' +
@@ -1147,7 +1151,7 @@
     if (npc.fireCooldown <= 0 && distance < 520) {
       var angle = Math.atan2(dy, dx);
       bullets.push({ x:npc.x, y:npc.y, vx:Math.cos(angle) * (330 + npcLevel * 8), vy:Math.sin(angle) * (330 + npcLevel * 8), r:6, life:2.8, damage:npc.damage, color:'#ff5a5a', owner:'npc' });
-      npc.fireCooldown = Math.max(0.32, 0.82 - (npcLevel - 1) * 0.055);
+      npc.fireCooldown = Math.max(0.32, 0.82 - (npcLevel - 1) * 0.055 - (npcLevel === 10 ? 0.04 : 0));
     }
   }
 
